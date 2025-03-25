@@ -29,6 +29,6 @@ class Report extends Model
      */
     public function member()
     {
-        return $this->belongsTo(Member::class, 'memberId');
+        return $this->belongsTo(Member::class, 'memberId', "id");
     }
 }

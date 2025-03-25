@@ -15,8 +15,24 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-Route::apiResource('members', MemberController::class);
+
 Route::apiResource('reports', ReportController::class);
+Route::apiResource('members', MemberController::class);
+Route::get('members/{member}/reports', [ReportController::class, 'getReportsByMember']);
+// Route::get('members/{member}/reports/{month}', [ReportController::class, 'getReportsByMemberAndMonth']);
+Route::get('members/{member}/reports/{year}/{month}', [ReportController::class, 'getReportsByMemberAndMonth']);
+
+Route::get('members/{member}/reports/{year}', [ReportController::class, 'getReportsByMemberAndYear']);
+
+
+
+
+Route::get('/test-cors', function (Request $request) {
+    return response()->json(['message' => 'CORS is working!']);
+});
+
+
+
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();

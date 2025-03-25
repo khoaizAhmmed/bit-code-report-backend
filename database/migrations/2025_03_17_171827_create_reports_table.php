@@ -22,7 +22,7 @@ class CreateReportsTable extends Migration
             $table->timestamp('outTime')->nullable();
             $table->integer('shortLeaveTime')->default(0);
             $table->integer('totalWorkTime')->nullable();
-            $table->tinyInteger('status')->default(1);
+            $table->tinyInteger('status')->default(2);
             $table->timestamps();
         });
     }
