@@ -13,9 +13,11 @@ jobs:
       - name: 🚚 Get latest code
         uses: actions/checkout@v4
 
-      - name: 📂 Sync files via FTP
+      - name: 📂 Sync files via FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ftp-sktusher.alwaysdata.net
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps  # ✅ Use FTPS (Explicit TLS)
+          security: strict  # ✅ Ensures a secure connection
