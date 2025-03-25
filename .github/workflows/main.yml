@@ -13,15 +13,13 @@ jobs:
       - name: 🚚 Get latest code
         uses: actions/checkout@v4
 
-      - name: 📂 Sync files via FTP
+      - name: 📂 Sync files via FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ftp.yourdomain.alwaysdata.net # Change this to your Alwaysdata FTP host
+          server: ftp-sktusher.alwaysdata.net
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps # ✅ Use FTPS for secure connection
-          security: strict # ✅ Enforce secure TLS connection
-          passive: true # ✅ Alwaysdata requires passive mode
-          concurrency: 1 # ✅ Upload files one by one to prevent connection issues
-          retries: 5 # ✅ Retry failed uploads up to 5 times
-          delayBetweenUpdates: 500 # ✅ Add 500ms delay between uploads to avoid disconnections
+          protocol: ftps # ✅ Use FTPS (Explicit TLS)
+          security: strict # ✅ Ensures a secure connection
+          timeout: 60 # Increase timeout to prevent disconnections
+          log-level: verbose # Enable detailed logs for debugging
