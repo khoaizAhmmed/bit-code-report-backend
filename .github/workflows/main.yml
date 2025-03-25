@@ -19,5 +19,8 @@ jobs:
           server: ftp-sktusher.alwaysdata.net
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps  # ✅ Use FTPS (Explicit TLS)
-          security: strict  # ✅ Ensures a secure connection
+          protocol: ftps
+          security: strict
+          passive: true  # ✅ Passive mode for better connectivity
+          concurrency: 1  # ✅ Upload files one by one
+          retries: 5  # ✅ Retry failed uploads
