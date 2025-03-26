@@ -20,6 +20,6 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps # Use `ftp` if FTPS is not supported
-    security: loose # Try `loose` if `strict` fails
-    timeout: 300 # Increase timeout to 300 seconds (5 mins)
-    log-level: verbose # Enable detailed logs for debugging
+          security: loose # Try `loose` if `strict` fails
+          timeout: 300 # Increase timeout to 300 seconds (5 mins)
+          log-level: verbose # Enable detailed logs for debugging
