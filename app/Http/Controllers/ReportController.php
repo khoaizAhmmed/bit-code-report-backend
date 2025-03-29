@@ -99,7 +99,8 @@ class ReportController extends Controller
         }
 
         // Validate month name and convert it to numeric month
-        $month = \Carbon\Carbon::parse($monthName)->format('m'); // Convert month name to month number (e.g., January => 01)
+
+        $month = \Carbon\Carbon::createFromFormat('d F Y', "01 $monthName $year")->format('m');
 
         if (!$month) {
             return response()->json(['error' => 'Invalid month name.'], 400);
@@ -144,7 +145,7 @@ class ReportController extends Controller
                     'outTime' => $report->outTime,
                     'shortLeaveTime' => $report->shortLeaveTime,
                     'totalWorkTime' => $report->totalWorkTime,
-                    'status' => 1, // Present
+                    'status' => $report->status,
                 ];
 
                 // Summing up work time for the summary

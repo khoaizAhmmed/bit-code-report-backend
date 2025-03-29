@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::apiResource('members', MemberController::class);
+// Route::apiResource('members', MemberController::class);
 // Route::apiResource('reports', ReportController::class);
 
 Route::get('/', function () {
