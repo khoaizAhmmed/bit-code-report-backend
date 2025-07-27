@@ -19,6 +19,9 @@ use Illuminate\Support\Facades\Route;
 Route::apiResource('reports', ReportController::class);
 Route::apiResource('members', MemberController::class);
 Route::get('members/{member}/reports', [ReportController::class, 'getReportsByMember']);
+Route::get('members/{member}', [MemberController::class, 'show']);
+
+
 // Route::get('members/{member}/reports/{month}', [ReportController::class, 'getReportsByMemberAndMonth']);
 Route::get('members/{member}/reports/{year}/{month}', [ReportController::class, 'getReportsByMemberAndMonth']);
 

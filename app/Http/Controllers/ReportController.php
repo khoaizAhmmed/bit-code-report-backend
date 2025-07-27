@@ -56,6 +56,7 @@ class ReportController extends Controller
      */
     public function update(Request $request, Report $report)
     {
+        var_dump($request->all());
         $validated = $request->validate([
             'memberId' => 'sometimes|exists:members,id',
             'date' => 'sometimes|date',
@@ -115,6 +116,7 @@ class ReportController extends Controller
 
         // Get member details
         $member = Member::find($memberId);
+
         if (!$member) {
             return response()->json(['error' => 'Member not found.'], 404);
         }
@@ -141,6 +143,8 @@ class ReportController extends Controller
                 // If report exists for this date
                 $report = $reports[$date];
                 $fullMonthReports[] = [
+                    'key' => $date,
+                    'id' => $report->id,
                     'date' => $date,
                     'dayName' => $dayName,
                     'workTime' => $report->workTime,
@@ -151,7 +155,7 @@ class ReportController extends Controller
                     'status' => $report->status,
                 ];
 
-                // Summing up work time for the summary
+                // Summing up work time for the summaryk
                 $totalWorkTime += $report->totalWorkTime;
                 $totalPresentDays++;
                 $totalWorkHours += $report->workTime;
@@ -166,6 +170,7 @@ class ReportController extends Controller
             } else {
                 // If no report found, mark as leave
                 $fullMonthReports[] = [
+                    'key' => $date,
                     'date' => $date,
                     'dayName' => $dayName,
                     'workTime' => 0,
@@ -187,14 +192,7 @@ class ReportController extends Controller
 
         // Prepare response
         return response()->json([
-            'member' => [
-                'id' => $member->id,
-                'name' => $member->name,
-                'email' => $member->email,
-                'avatar' => $member->avatar,
-                'joinDate' => $member->joinDate,
-                'status' => $member->status,
-            ],
+            'member' => $member,
             'monthSummary' => [
                 'month' => $monthName, // Use full month name
                 'year' => $year,
