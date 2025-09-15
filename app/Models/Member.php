@@ -18,7 +18,8 @@ class Member extends Model
         'joinDate',
         'endDate',
         'workTime',
-        'status'
+        'status',
+        'leave'
     ];
 
     /**
