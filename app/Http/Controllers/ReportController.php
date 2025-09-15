@@ -277,136 +277,13 @@ class ReportController extends Controller
         ]);
     }
 
-
-    // public function getYearlyAttendanceReport($year = null)
-    // {
-    //     // If no year provided, use current year
-    //     $year = $year ?? Carbon::now()->year;
-
-    //     $startDate = Carbon::create($year, 1, 1);
-    //     $endDate = Carbon::create($year, 12, 31);
-
-    //     // Generate all dates in the year
-    //     $allDates = [];
-    //     for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
-    //         $allDates[] = $date->toDateString();
-    //     }
-
-    //     // Fetch all attendance records for the year
-    //     $attendance = Report::whereBetween('date', [$startDate, $endDate])
-    //         ->get()
-    //         ->groupBy('memberId');
-
-    //     // Fetch all members
-    //     $members = Member::all();
-
-    //     $report = [];
-
-    //     foreach ($members as $member) {
-    //         $memberAttendance = $attendance->get($member->id, collect())->pluck('date')->toArray();
-
-    //         $presentDays = count($memberAttendance);
-    //         $leaveDays = count($allDates) - $presentDays;
-
-    //         $report[] = [
-    //             'member_id'    => $member->id,
-    //             'name'         => $member->name,
-    //             'email'        => $member->email,
-    //             'present_days' => $presentDays,
-    //             'leave_days'   => $leaveDays,
-    //             'total_days'   => count($allDates),
-    //         ];
-    //     }
-
-    //     return $report;
-    // }
-
-
-
-
-    // public function getYearlyAttendanceReport($year = null)
-    // {
-    //     $year = $year ?? Carbon::now()->year;
-    //     $startOfYear = Carbon::create($year, 1, 1);
-    //     $endOfYear = Carbon::create($year, 12, 31);
-
-    //     $members = Member::all();
-    //     $report = [];
-
-    //     foreach ($members as $member) {
-    //         // Set start date: max(joinDate, startOfYear)
-    //         $startDate = Carbon::parse($member->joinDate);
-    //         if ($startDate->lt($startOfYear)) {
-    //             $startDate = $startOfYear;
-    //         }
-
-    //         // Last updated attendance date for member
-    //         $lastAttendance = Report::where('memberId', $member->id)
-    //             ->whereYear('date', $year)
-    //             ->orderBy('updated_at', 'desc')
-    //             ->first();
-
-    //         $endDate = $lastAttendance
-    //             ? Carbon::parse($lastAttendance->updated_at)
-    //             : $endOfYear;
-
-    //         if ($endDate->gt($endOfYear)) {
-    //             $endDate = $endOfYear;
-    //         }
-
-    //         // Get attendance for this member in date range
-    //         $attendance = Report::where('memberId', $member->id)
-    //             ->whereBetween('date', [$startDate, $endDate])
-    //             ->get();
-
-    //         // Count sums
-    //         $totalPlanned = $attendance->sum('workTime');       // Planned workTime sum from attendance
-    //         $totalActual  = $attendance->sum('totalWorkTime');  // Actual workTime sum
-    //         $timeDifference = $totalActual - $totalPlanned;    // Overtime (+) / Undertimed (-)
-
-    //         // Calculate difference in "days" based on member's daily workTime
-    //         $dailyWorkTime = $member->workTime > 0 ? $member->workTime : 1; // avoid division by zero
-    //         $timeDifferenceDays = round($timeDifference / $dailyWorkTime, 2); // rounded to 2 decimals
-
-    //         // Count present & leave days
-    //         $allDates = [];
-    //         for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
-    //             $allDates[] = $date->toDateString();
-    //         }
-
-    //         $presentDays = $attendance->count();
-    //         $leaveDays = count($allDates) - $presentDays;
-
-    //         $report[] = [
-    //             'member_id'          => $member->id,
-    //             'name'               => $member->name,
-    //             'email'              => $member->email,
-    //             'start_date'         => $startDate->toDateString(),
-    //             'end_date'           => $endDate->toDateString(),
-    //             'present_days'       => $presentDays,
-    //             'leave_days'         => $leaveDays,
-    //             'total_days'         => count($allDates),
-    //             'total_work_time'    => $totalPlanned,
-    //             'total_actual'       => $totalActual,
-    //             'time_difference'    => $timeDifference,
-    //             'time_difference_day'=> $timeDifferenceDays,
-    //         ];
-    //     }
-
-    //     return $report;
-    // }
-
-
     public function getYearlyAttendanceReport($year = null)
     {
         $year = $year ?? Carbon::now()->year;
         $startOfYear = Carbon::create($year, 1, 1);
         $endOfYear = Carbon::create($year, 12, 31);
 
-        $members = Member::all();
-        // echo        "<pre>";
-        // print_r($members);
-        // echo        "</pre>";
+        $members = Member::where('status', 1)->get();
         $report = [];
 
         foreach ($members as $member) {
