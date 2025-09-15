@@ -28,7 +28,7 @@ Route::get('members/{member}', [MemberController::class, 'show']);
 // Route::get('members/{member}/reports/{month}', [ReportController::class, 'getReportsByMemberAndMonth']);
 Route::get('members/{member}/reports/{year}/{month}', [ReportController::class, 'getReportsByMemberAndMonth']);
 
-Route::get('members/{member}/reports/{year}', [ReportController::class, 'getReportsByMemberAndYear']);
+Route::get('members/{member}/reports/{year}', [ReportController::class, 'getMemberAttendanceReport']);
 
 
 
