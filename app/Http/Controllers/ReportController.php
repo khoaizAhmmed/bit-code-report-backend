@@ -457,8 +457,10 @@ class ReportController extends Controller
             $timeDifferenceDays = round($timeDifference / $dailyWorkTime, 2);
             $report[] = [
                 'memberId'             => $member->id,
+                'avatar'             => $member->avatar,
                 'name'                 => $member->name,
                 'email'                => $member->email,
+                'joinDate'             => $member->joinDate,
                 'startDate'            => $startDate->toDateString(),
                 'endDate'              => $endDate->toDateString(),
                 'presentDays'          => $presentDays,
@@ -471,8 +473,7 @@ class ReportController extends Controller
                 'timeDifferenceDay'    => $timeDifferenceDays,
             ];
         }
-
-        return $report;
+        return response()->json($report);
     }
 
 

@@ -20,7 +20,7 @@ Route::apiResource('reports', ReportController::class);
 Route::apiResource('members', MemberController::class);
 
 Route::get('members/{member}/reports', [ReportController::class, 'getReportsByMember']);
-Route::get('all-report', [ReportController::class, 'getYearlyAttendanceReport']);
+Route::get('all-reports', [ReportController::class, 'getYearlyAttendanceReport']);
 
 Route::get('members/{member}', [MemberController::class, 'show']);
 
