@@ -370,9 +370,11 @@ class ReportController extends Controller
 
             // Member last updated attendance
             $lastAttendance = Report::where('memberId', $member->id)
-                ->whereYear('date', $year)
-                ->orderBy('updated_at', 'desc')
-                ->first();
+            ->whereYear('date', $year)
+            ->orderBy('date', 'desc')
+            ->first();
+
+            $endDate = $lastAttendance ? Carbon::parse($lastAttendance->date) : $endOfYear;
             $endDate = $lastAttendance ? Carbon::parse($lastAttendance->updated_at) : $endOfYear;
             if ($endDate->gt($endOfYear)) {
                 $endDate = $endOfYear;
