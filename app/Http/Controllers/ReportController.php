@@ -41,7 +41,7 @@ class ReportController extends Controller
         });
 
         // Return the created reports
-        return response()->json($reports, 201);
+        return response()->json(['message' => 'data create successfully',"report" => $report], 201);
     }
 
     /**
@@ -71,7 +71,7 @@ class ReportController extends Controller
         $res = $report->update($validated);
         if ($res) {
 
-            return response()->json(['message' => 'data update successfully'], 200);
+            return response()->json(['message' => 'data update'], 200);
         }
         return response()->json(['message' => 'data not updated'], 400);
     }
