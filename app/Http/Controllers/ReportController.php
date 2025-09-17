@@ -41,7 +41,7 @@ class ReportController extends Controller
         });
 
         // Return the created reports
-        return response()->json(['message' => 'data create successfully',"report" => $report], 201);
+        return response()->json(['message' => 'data create successfully',"report" => $reports], 201);
     }
 
     /**
