@@ -57,7 +57,6 @@ class ReportController extends Controller
      */
     public function update(Request $request, Report $report)
     {
-        var_dump($request->all());
         $validated = $request->validate([
             'memberId' => 'sometimes|exists:members,id',
             'date' => 'sometimes|date',
@@ -69,8 +68,12 @@ class ReportController extends Controller
             'status' => 'sometimes|integer',
         ]);
 
-        $report->update($validated);
-        return response()->json($report);
+        $res = $report->update($validated);
+        if ($res) {
+
+            return response()->json(['message' => 'data update successfully'], 200);
+        }
+        return response()->json(['message' => 'data not updated'], 400);
     }
 
     /**
