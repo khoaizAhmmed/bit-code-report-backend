@@ -123,10 +123,7 @@ class ReportController extends Controller
         }
 
         // Get total days in the month
-
-
         $daysInMonth =  \Carbon\Carbon::create($year, $month, 1)->daysInMonth;
-
 
         // Generate a complete list of dates in the month
         $fullMonthReports = [];
