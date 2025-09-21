@@ -103,35 +103,34 @@ class ReportController extends Controller
             return response()->json(['error' => 'Invalid year format. Use YYYY (e.g., 2024).'], 400);
         }
 
-        // Validate month name and convert it to numeric month
-
-        $month = \Carbon\Carbon::createFromFormat('d F Y', "01 $monthName $year")->format('m');
-
-        if (!$month) {
-            return response()->json(['error' => 'Invalid month name.'], 400);
-        }
-
-        // Fetch reports for the given member, month, and year
-        $reports = Report::where('memberId', $memberId)
-            ->whereMonth('date', $month)
-            ->whereYear('date', $year)
-            ->get()
-            ->keyBy('date'); // Key by date for easy lookup
-
-        // Get member details
+        // Get member
         $member = Member::find($memberId);
-
         if (!$member) {
             return response()->json(['error' => 'Member not found.'], 404);
         }
 
-        // Get total days in the month
+        // Convert month name to numeric month safely
+        try {
+            $month = \Carbon\Carbon::createFromFormat('F Y', "$monthName $year")->month;
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Invalid month name.'], 400);
+        }
 
+        // Member's join date
+        $memberJoin = Carbon::parse($member->joinDate);
 
-        $daysInMonth =  \Carbon\Carbon::create($year, $month, 1)->daysInMonth;
+        // Start and end of the month
+        $monthStart = Carbon::create($year, $month, 1)->max($memberJoin); // start cannot be before join
+        $monthEnd   = Carbon::create($year, $month, 1)->endOfMonth();
 
+        // Fetch reports for this member and month
+        $reports = Report::where('memberId', $memberId)
+            ->whereBetween('date', [$monthStart, $monthEnd])
+            ->get()
+            ->keyBy('date');
 
-        // Generate a complete list of dates in the month
+        $daysInMonth = $monthStart->diffInDays($monthEnd) + 1;
+
         $fullMonthReports = [];
         $totalWorkTime = 0;
         $totalPresentDays = 0;
@@ -139,17 +138,16 @@ class ReportController extends Controller
         $inTimes = [];
         $outTimes = [];
 
-        for ($day = 1; $day <= $daysInMonth; $day++) {
-            $date = sprintf('%s-%02d-%02d', $year, $month, $day);
-            $dayName = \Carbon\Carbon::parse($date)->format('l'); // Get day name (Monday, Tuesday, etc.)
+        for ($date = $monthStart->copy(); $date->lte($monthEnd); $date->addDay()) {
+            $dateStr = $date->toDateString();
+            $dayName = $date->format('l');
 
-            if (isset($reports[$date])) {
-                // If report exists for this date
-                $report = $reports[$date];
+            if (isset($reports[$dateStr])) {
+                $report = $reports[$dateStr];
                 $fullMonthReports[] = [
-                    'key' => $date,
+                    'key' => $dateStr,
                     'id' => $report->id,
-                    'date' => $date,
+                    'date' => $dateStr,
                     'dayName' => $dayName,
                     'workTime' => $report->workTime,
                     'inTime' => $report->inTime,
@@ -158,13 +156,9 @@ class ReportController extends Controller
                     'totalWorkTime' => $report->totalWorkTime,
                     'status' => $report->status,
                 ];
-
-                // Summing up work time for the summaryk
                 $totalWorkTime += $report->totalWorkTime;
                 $totalPresentDays++;
                 $totalWorkHours += $report->workTime;
-
-                // Collect in-time and out-time for averages
                 if ($report->inTime) {
                     $inTimes[] = strtotime($report->inTime);
                 }
@@ -172,10 +166,9 @@ class ReportController extends Controller
                     $outTimes[] = strtotime($report->outTime);
                 }
             } else {
-                // If no report found, mark as leave
                 $fullMonthReports[] = [
-                    'key' => $date,
-                    'date' => $date,
+                    'key' => $dateStr,
+                    'date' => $dateStr,
                     'dayName' => $dayName,
                     'workTime' => 0,
                     'inTime' => null,
@@ -187,28 +180,25 @@ class ReportController extends Controller
             }
         }
 
-        // Calculate leave days
         $leaveDays = $daysInMonth - $totalPresentDays;
 
-        // Calculate average in-time and out-time
         $averageInTime = !empty($inTimes) ? date('H:i:s', array_sum($inTimes) / count($inTimes)) : null;
         $averageOutTime = !empty($outTimes) ? date('H:i:s', array_sum($outTimes) / count($outTimes)) : null;
 
-        // Prepare response
         return response()->json([
             'member' => $member,
             'monthSummary' => [
-                'month' => $monthName, // Use full month name
+                'month' => $monthStart->format('F'),
                 'year' => $year,
                 'totalWorkComplete' => $totalWorkTime,
-                'averageWorkTime' => $totalPresentDays > 0 ? $totalWorkTime / $totalPresentDays : 0,
+                'averageWorkTime' => $totalPresentDays > 0 ? round($totalWorkTime / $totalPresentDays, 2) : 0,
                 'totalPresentDays' => $totalPresentDays,
                 'leaveDays' => $leaveDays,
                 'totalWorkTimeSum' => $totalWorkHours,
                 'averageInTime' => $averageInTime,
                 'averageOutTime' => $averageOutTime,
             ],
-            'reports' => $fullMonthReports, // Full list of reports for the month
+            'reports' => $fullMonthReports,
         ]);
     }
 
@@ -278,6 +268,7 @@ class ReportController extends Controller
         ]);
     }
 
+
     public function getMemberAttendanceReport($memberId, $year = null)
     {
         $year = $year ?? Carbon::now()->year;
@@ -287,57 +278,70 @@ class ReportController extends Controller
             return response()->json(['message' => 'Member not found'], 404);
         }
 
-        // Start of year or member join date
-        $startDate = Carbon::parse($member->joinDate)->max(Carbon::create($year, 1, 1));
+        $startOfYear = Carbon::create($year, 1, 1);
+        $endOfYear   = Carbon::create($year, 12, 31);
+
+        // Start date = member join date or start of year, whichever is later
+        $startDate = Carbon::parse($member->joinDate)->max($startOfYear);
 
         // Last report date for the member in the year
         $lastReportDate = Report::where('memberId', $memberId)
             ->whereYear('date', $year)
             ->max('date');
 
-        if ($lastReportDate) {
-            $endDate = Carbon::parse($lastReportDate);
-        } else {
-            $endDate = $startDate; // No reports, end date = start date
-        }
+        $endDate = $lastReportDate ? Carbon::parse($lastReportDate)->min($endOfYear) : $endOfYear;
 
         // Fetch all reports for member in the year up to last report date
         $allReports = Report::where('memberId', $memberId)
             ->whereBetween('date', [$startDate, $endDate])
             ->get();
 
-        // Group by month
-        $monthlyReports = $allReports->groupBy(fn ($r) => Carbon::parse($r->date)->format('F'));
+        // Group by month number for correct chronological order
+        $monthlyReports = $allReports->groupBy(fn ($r) => Carbon::parse($r->date)->month);
 
-        $monthlySummary = $monthlyReports->map(function ($monthReports, $month) use ($year) {
-            $monthNumber = Carbon::parse("$month 1 $year")->month;
-            $daysInMonth = Carbon::create($year, $monthNumber)->daysInMonth;
+        $monthlySummary = collect(range(1, 12))->map(function ($monthNumber) use ($monthlyReports, $year, $startDate, $endDate) {
+            $monthReports = $monthlyReports->get($monthNumber, collect());
+
+            // Days in the month
+            $monthStart = Carbon::create($year, $monthNumber, 1);
+            $monthEnd   = $monthStart->copy()->endOfMonth();
+
+            // Adjust for member joining mid-month or last report before month end
+            if ($monthEnd->lt($startDate) || $monthStart->gt($endDate)) {
+                // Member not active in this month
+                $daysInMonth = 0;
+            } else {
+                $monthStart = $monthStart->lt($startDate) ? $startDate : $monthStart;
+                $monthEnd   = $monthEnd->gt($endDate) ? $endDate : $monthEnd;
+                $daysInMonth = $monthStart->diffInDays($monthEnd) + 1;
+            }
+
             $totalPresent = $monthReports->count();
             $leaveDays = $daysInMonth - $totalPresent;
+            $leaveDays = $leaveDays < 0 ? 0 : $leaveDays;
 
             return [
-                'month'             => $month,
+                'month'             => $monthStart->format('F'),
                 'totalWorkComplete' => $monthReports->sum('totalWorkTime'),
-                'averageWorkTime'   => round($monthReports->avg('totalWorkTime'), 2),
+                'averageWorkTime'   => $monthReports->count() ? round($monthReports->avg('totalWorkTime'), 2) : 0,
                 'totalWorkTimeSum'  => $monthReports->sum('workTime'),
                 'totalPresentDays'  => $totalPresent,
                 'leaveDays'         => $leaveDays,
             ];
-        })->values();
+        })->filter(fn ($m) => $m['totalPresentDays'] > 0 || $m['leaveDays'] > 0)->values();
 
-        // Yearly summary based on last report date
+        // Yearly summary
         $totalPresentDays = $allReports->count();
         $totalPlanned = $allReports->sum('workTime');
-        $totalActual = $allReports->sum('totalWorkTime');
+        $totalActual  = $allReports->sum('totalWorkTime');
         $timeDiff = $totalActual - $totalPlanned;
         $dailyWorkTime = $member->workTime > 0 ? $member->workTime : 1;
-
         $totalDays = $startDate->diffInDays($endDate) + 1;
 
         $yearlySummary = [
             'year'              => $year,
             'totalWorkComplete' => $totalActual,
-            'averageWorkTime'   => round($allReports->avg('totalWorkTime'), 2),
+            'averageWorkTime'   => $allReports->count() ? round($allReports->avg('totalWorkTime'), 2) : 0,
             'totalWorkTimeSum'  => $totalPlanned,
             'totalPresentDays'  => $totalPresentDays,
             'totalLeaveDays'    => $totalDays - $totalPresentDays,
@@ -349,11 +353,12 @@ class ReportController extends Controller
         ];
 
         return response()->json([
-            'member'         => $member->only(['id', 'name', 'email', 'avatar', 'joinDate', 'endDate', 'workTime', 'status']),
+            'member'         => $member->only(['id', 'name', 'email', 'avatar', 'joinDate', 'workTime', 'status']),
             'monthlySummary' => $monthlySummary,
             'yearSummary'    => $yearlySummary,
         ]);
     }
+
 
     public function getYearlyAttendanceReport($year = null)
     {
