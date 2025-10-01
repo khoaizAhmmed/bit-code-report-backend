@@ -289,7 +289,8 @@ class ReportController extends Controller
             ->whereYear('date', $year)
             ->max('date');
 
-        $endDate = $lastReportDate ? Carbon::parse($lastReportDate)->min($endOfYear) : $endOfYear;
+        // $endDate = $lastReportDate ? Carbon::parse($lastReportDate)->endOfMonth($endOfYear) : $endOfYear;
+        $endDate = $member->endDate ? Carbon::parse($member->endDate) : Carbon::parse($lastReportDate)->endOfMonth();
 
         // Fetch all reports for member in the year up to last report date
         $allReports = Report::where('memberId', $memberId)
@@ -382,8 +383,10 @@ class ReportController extends Controller
             ->max('date');
 
 
-            $endDate = $lastAttendance ? Carbon::parse($lastAttendance) : $endOfYear;
-            $endDate = $lastAttendance ? Carbon::parse($lastAttendance) : $endOfYear;
+            // $endDate = $lastAttendance ? Carbon::parse($lastAttendance) : $endOfYear;
+
+            $endDate = $member->endDate ? Carbon::parse($member->endDate) : Carbon::parse($lastAttendance)->endOfMonth();
+
             if ($endDate->gt($endOfYear)) {
                 $endDate = $endOfYear;
             }
